@@ -5,7 +5,7 @@ This extension integrates with Amazon EventBridge Schema Registry to provide aut
 ![Demo](./images/demo.gif)
 
 ## Usage
-When composing EventBridge patterns, place the cursor where you want to insert a property or value and hit `ctrl+space` to releave the suggestions. Note that if you have multiple code completion extensions installed, then the result of some of them might end up before the suggestions from this extension.
+When composing EventBridge patterns, place the cursor where you want to insert a property or value and hit `ctrl+space`/`⌃space` to reveal the suggestions. Note that if you have multiple code completion extensions installed, then the result of some of them might end up before the suggestions from this extension.
 
 Note that an EventBridge schema's ID is named after the `source` and `detail-type`, such as `my-source@MyDetailType`. Therefore you will only get suggestions beyond the `detail` property once both `source` and `detail-type` have been provided.
 
