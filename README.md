@@ -2,6 +2,7 @@
 
 This extension integrates with Amazon EventBridge Schema Registry to provide autocomplete when composing event patterns.
 
+![Demo](./images/demo.gif)
 
 ## Features
 

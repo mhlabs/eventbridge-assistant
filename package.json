@@ -3,6 +3,7 @@
   "displayName": "EventBridge Aassistant",
   "description": "Autocomplete for building patterns against EventBridge schemas",
   "version": "0.0.1",
+  "publisher": "ljacobsson",
   "engines": {
     "vscode": "^1.63.0"
   },
