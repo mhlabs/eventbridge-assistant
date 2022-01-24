@@ -71,7 +71,7 @@ export class CompletionActionProvider implements vscode.CompletionItemProvider {
       const schemaKeys = Object.keys(schemaPath).map((p) => p + ":\n\t");
       const suggestions = (isLeaf ? filterTypes : schemaKeys).map((key) => ({
         label: key,
-        kind: vscode.CompletionItemKind.Variable,
+        kind: isLeaf ? vscode.CompletionItemKind.Event : vscode.CompletionItemKind.Field,
         data: key,
         range: this.getSuggestionRange(position, document),
       }));
@@ -144,7 +144,7 @@ export class CompletionActionProvider implements vscode.CompletionItemProvider {
     ];
     const suggestions = sources.map((key) => ({
       label: `- ${key}\n`,
-      kind: vscode.CompletionItemKind.Reference,
+      kind: vscode.CompletionItemKind.Event,
       data: key,
       range: this.getSuggestionRange(position, document),
     }));
@@ -174,7 +174,7 @@ export class CompletionActionProvider implements vscode.CompletionItemProvider {
     ];
     const suggestions = sources.map((key) => ({
       label: `- ${key}\n`,
-      kind: vscode.CompletionItemKind.Reference,
+      kind: vscode.CompletionItemKind.Event,
       data: key,
       range: this.getSuggestionRange(position, document),
     }));
