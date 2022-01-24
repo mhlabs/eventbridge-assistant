@@ -1,6 +1,6 @@
 {
   "name": "eventbridge-assistant",
-  "displayName": "eventbridge-assistant",
+  "displayName": "EventBridge Aassistant",
   "description": "Autocomplete for building patterns against EventBridge schemas",
   "version": "0.0.1",
   "engines": {
