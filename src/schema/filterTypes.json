@@ -1,0 +1,7 @@
+[
+  "- prefix: ",
+  "- anything-but: ",
+  "- numeric:\n\t",
+  "- cidr: ",
+  "- exists: "
+]

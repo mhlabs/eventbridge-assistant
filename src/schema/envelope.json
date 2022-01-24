@@ -1,0 +1,57 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "RoomStateChange"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "AWSEvent": {
+        "type": "object",
+        "required": [
+          "detail-type",
+          "resources",
+          "detail",
+          "id",
+          "source",
+          "time",
+          "region",
+          "account"
+        ],
+        "x-amazon-events-detail-type": "Room State Change",
+        "x-amazon-events-source": "aws.a4b",
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/Anything"
+          },
+          "account": {
+            "type": "string"
+          },
+          "detail-type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "resources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}
