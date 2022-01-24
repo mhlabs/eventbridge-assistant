@@ -65,11 +65,19 @@ export class SchemasUtil {
     }
     const detailTypeCheck = doc.checkKey("detail-type");
     if (detailTypeCheck) {
-      detailType = detailTypeCheck[0].replace(/ /g, "");
+      detailType = this.toPascal(detailTypeCheck[0].replace(/ /g, ""));
     }
     return { source, detailType };
   }
-
+  private toPascal(str: string)  {
+	return str.split("/")
+	  .map(p => p.split("-")
+		.map(substr => substr.charAt(0)
+		  .toUpperCase() +
+		  substr.slice(1))
+		.join(""))
+	  .join("/");
+  }
   getRegistry(resource: any) {
     const doc = JsonFind(resource);
     const props = JsonFind(resource.Properties);

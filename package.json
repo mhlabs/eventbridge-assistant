@@ -1,8 +1,8 @@
 {
   "name": "eventbridge-assistant",
-  "displayName": "EventBridge Aassistant",
+  "displayName": "EventBridge Assistant",
   "description": "Autocomplete for building patterns against EventBridge schemas",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "publisher": "ljacobsson",
   "engines": {
     "vscode": "^1.63.0"
