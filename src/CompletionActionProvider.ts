@@ -52,10 +52,7 @@ export class CompletionActionProvider implements vscode.CompletionItemProvider {
       if (pathSplit.length === 1) {
         pathSplit = jsonPath?.split("Properties.EventPattern.");
       }
-      const pathList =
-        pathSplit.length > 1
-          ? pathSplit[1].split(".")
-          : [];
+      const pathList = pathSplit.length > 1 ? pathSplit[1].split(".") : [];
       const schema = await schemas.getSchema(source, detailType, registryName);
 
       let schemaPath = schema.components.schemas.AWSEvent.properties;
@@ -68,11 +65,21 @@ export class CompletionActionProvider implements vscode.CompletionItemProvider {
         isLeaf
       ));
 
-      const schemaKeys = Object.keys(schemaPath).map((p) => p + ":\n\t");
-      const suggestions = (isLeaf ? filterTypes : schemaKeys).map((key) => ({
+      const schemaKeys = Object.keys(schemaPath);
+      if (isLeaf) {
+        const suggestions = filterTypes.map((key) => ({
+          label: key.name,
+		  filterText: `- ${key}`,
+          insertText: `- ${key.name}${key.newLine ? ":\n\t- " : ": "}`,
+          kind: vscode.CompletionItemKind.Event,
+          range: this.getSuggestionRange(position, document),
+        }));
+        return { items: suggestions, isIncomplete: true };
+      }
+      const suggestions = schemaKeys.map((key) => ({
         label: key,
-        kind: isLeaf ? vscode.CompletionItemKind.Event : vscode.CompletionItemKind.Field,
-        data: key,
+        insertText: key + ":\n\t",
+        kind: vscode.CompletionItemKind.Field,
         range: this.getSuggestionRange(position, document),
       }));
       return { items: suggestions, isIncomplete: true };
@@ -143,7 +150,9 @@ export class CompletionActionProvider implements vscode.CompletionItemProvider {
       ),
     ];
     const suggestions = sources.map((key) => ({
-      label: `- ${key}\n`,
+      label: `${key}`,
+      filterText: `- ${key}`,
+      insertText: `- ${key}\n`,
       kind: vscode.CompletionItemKind.Event,
       data: key,
       range: this.getSuggestionRange(position, document),
@@ -158,7 +167,7 @@ export class CompletionActionProvider implements vscode.CompletionItemProvider {
     filter: string,
     registryName: string
   ) {
-    const sources = [
+    const detailTypes = [
       ...new Set(
         schemas.schemaNames[registryName]
           .filter((p) => p.split("@")[0] === filter)
@@ -172,8 +181,10 @@ export class CompletionActionProvider implements vscode.CompletionItemProvider {
           )
       ),
     ];
-    const suggestions = sources.map((key) => ({
-      label: `- ${key}\n`,
+    const suggestions = detailTypes.map((key) => ({
+      label: `${key}`,
+      filterText: `- ${key}`,
+      insertText: `- ${key}\n`,
       kind: vscode.CompletionItemKind.Event,
       data: key,
       range: this.getSuggestionRange(position, document),

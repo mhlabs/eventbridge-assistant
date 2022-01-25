@@ -1,7 +1,7 @@
 [
-  "- prefix: ",
-  "- anything-but: ",
-  "- numeric:\n\t",
-  "- cidr: ",
-  "- exists: "
+  { "name": "prefix" },
+  { "name": "anything-but" },
+  { "name": "numeric", "newLine": true },
+  { "name": "cidr" },
+  { "name": "exists" }
 ]
