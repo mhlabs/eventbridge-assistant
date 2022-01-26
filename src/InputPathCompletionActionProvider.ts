@@ -6,7 +6,9 @@ import * as filterTypes from "./schema/filterTypes.json";
 import { SchemasUtil } from "./util/SchemasUtil";
 const jsondiffpatch = require("jsondiffpatch").create();
 const schemas = new SchemasUtil();
-export class CompletionActionProvider implements vscode.CompletionItemProvider {
+export class InputPathCompletionActionProvider
+  implements vscode.CompletionItemProvider
+{
   async provideCompletionItems(
     document: vscode.TextDocument,
     position: vscode.Position
@@ -22,72 +24,32 @@ export class CompletionActionProvider implements vscode.CompletionItemProvider {
       return { items: [], isIncomplete: true };
     }
     const resource = template.Resources[resourceName];
-    if (resource) {
-      // Get and cache schema names
-      await schemas.getSchemas("aws.events");
-      await schemas.getSchemas("discovered-schemas");
 
-      // Get registry based on EventBusName
-      const registryName = schemas.getRegistry(resource);
+    const current = this.getJsonPropertyName(document.getText(), position.line);
+    if (!resource || current !== "InputPath") {
+      return;
+    }
 
-      const schemaKeySuggestions = this.schemaKeysSuggestions(
-        document,
-        position,
-        registryName,
-        resource
+    const schemaKeys = schemas.getSchemaKeys(resource);
+    try {
+      const schema = await schemas.getSchema(
+        schemaKeys.source,
+        schemaKeys.detailType,
+        "aws.events"
       );
-      if (schemaKeySuggestions) {
-        return schemaKeySuggestions;
-      }
-
-      let { source, detailType }: { source: string; detailType: string } =
-        schemas.getSchemaKeys(resource);
-
-      const jsonPath = this.estimateJsonPath(
-        resource,
-        document.getText(),
-        position.line
-      );
-      let pathSplit = jsonPath?.split("Properties.Pattern.");
-      if (pathSplit.length === 1) {
-        pathSplit = jsonPath?.split("Properties.EventPattern.");
-      }
-      const pathList = pathSplit.length > 1 ? pathSplit[1].split(".") : [];
-      const schema = await schemas.getSchema(source, detailType, registryName);
-
       let schemaPath = schema.components.schemas.AWSEvent.properties;
-      let isLeaf = false;
-
-      ({ schemaPath, isLeaf } = schemas.navigateSchema(
-        pathList,
-        schemaPath,
-        schema,
-        isLeaf
-      ));
-
-      const schemaKeys = Object.keys(schemaPath);
-      if (isLeaf) {
-        const suggestions = filterTypes.map((key) => ({
-          label: key.name,
-		  sortText: " " + key,
-		  filterText: `- ${key}`,
-          insertText: `- ${key.name}${key.newLine ? ":\n\t- " : ": "}`,
-          kind: vscode.CompletionItemKind.Event,
-          range: this.getSuggestionRange(position, document),
-        }));
-        return { items: suggestions, isIncomplete: true };
-      }
-      const suggestions = schemaKeys.map((key) => ({
+      const what = schemas.navigateSchema([], schemaPath, schema, false);
+      const suggestions = Object.keys(what.schemaPath).map((key) => ({
         label: key,
-		sortText: " " + key,
-        insertText: key + ":\n\t",
-        kind: vscode.CompletionItemKind.Field,
+        sortText: " " + key,
+        insertText: `${key}`,
+        kind: vscode.CompletionItemKind.Event,
         range: this.getSuggestionRange(position, document),
       }));
       return { items: suggestions, isIncomplete: true };
+    } catch (e) {
+      console.log(e);
     }
-
-    return { items: [], isIncomplete: true };
   }
 
   schemaKeysSuggestions(
@@ -153,7 +115,7 @@ export class CompletionActionProvider implements vscode.CompletionItemProvider {
     ];
     const suggestions = sources.map((key) => ({
       label: `${key}`,
-	  sortText: " " + key,
+      sortText: " " + key,
       filterText: `- ${key}`,
       insertText: `- ${key}\n`,
       kind: vscode.CompletionItemKind.Event,
@@ -186,7 +148,7 @@ export class CompletionActionProvider implements vscode.CompletionItemProvider {
     ];
     const suggestions = detailTypes.map((key) => ({
       label: `${key}`,
-	  sortText: " " + key,
+      sortText: " " + key,
       filterText: `- ${key}`,
       insertText: `- ${key}\n`,
       kind: vscode.CompletionItemKind.Event,

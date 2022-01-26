@@ -1,8 +1,9 @@
 process.env.AWS_SDK_LOAD_CONFIG = "1";
 import * as vscode from "vscode";
-import { CompletionActionProvider } from "./CompletionActionProvider";
+import { PatternCompletionActionProvider } from "./PatternCompletionActionProvider";
 import * as AWS from "aws-sdk";
 import { SingleSignOnCredentials } from "@mhlabs/aws-sdk-sso";
+import { InputPathCompletionActionProvider } from "./InputPathCompletionActionProvider";
 const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
   "eventbridge-assistant"
 );
@@ -13,22 +14,26 @@ export async function activate(context: vscode.ExtensionContext) {
     await vscode.window.showErrorMessage(err);
   }
 
-  let disposable = vscode.commands.registerCommand(
-    "eventbridge-assistant.enable",
-    () => {
+  context.subscriptions.push(
+    vscode.commands.registerCommand("eventbridge-assistant.enable", () => {
+    //   vscode.languages.registerCompletionItemProvider(
+    //     "yaml",
+    //     new PatternCompletionActionProvider()
+    //   );
       vscode.languages.registerCompletionItemProvider(
         "yaml",
-        new CompletionActionProvider()
+        new InputPathCompletionActionProvider()
       );
-    }
+    })
   );
-  context.subscriptions.push(disposable);
+
   await vscode.commands.executeCommand("eventbridge-assistant.enable");
 }
 
 async function authenticate(profile?: any) {
   try {
-    process.env.AWS_PROFILE = profile || (await config.get("AWSProfile")) || "default";
+    process.env.AWS_PROFILE =
+      profile || (await config.get("AWSProfile")) || "default";
     AWS.config.credentialProvider?.providers.unshift(
       new SingleSignOnCredentials()
     );

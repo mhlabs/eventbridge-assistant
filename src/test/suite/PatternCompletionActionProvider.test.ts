@@ -3,9 +3,9 @@ import * as vscode from "vscode";
 
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
-import { CompletionActionProvider } from "../../CompletionActionProvider";
+import { PatternCompletionActionProvider } from "../../PatternCompletionActionProvider";
 // import * as myExtension from '../../extension';
-const provider = new CompletionActionProvider();
+const provider = new PatternCompletionActionProvider();
 suite("getJsonPath tests", () => {
   vscode.window.showInformationMessage("Start all tests.");
   test("Get JSON path test - value change", () => {
