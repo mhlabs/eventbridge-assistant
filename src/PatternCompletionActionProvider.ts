@@ -81,7 +81,7 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
         label: key,
 		sortText: " " + key,
         insertText: key + ":\n\t",
-        kind: vscode.CompletionItemKind.Field,
+        kind: schemaPath[key]["$ref"] ? vscode.CompletionItemKind.Field : vscode.CompletionItemKind.Value,
         range: this.getSuggestionRange(position, document),
       }));
       return { items: suggestions, isIncomplete: true };

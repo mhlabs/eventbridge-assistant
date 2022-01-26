@@ -68,7 +68,7 @@ export class InputPathCompletionActionProvider
           //          filterText: jsonPathSplit.slice(-1)[0],
           kind: schemaProperty.schemaPath[key]["$ref"]
             ? vscode.CompletionItemKind.Field
-            : vscode.CompletionItemKind.Event,
+            : vscode.CompletionItemKind.Value,
         }));
         return { items: suggestions, isIncomplete: true };
       }
