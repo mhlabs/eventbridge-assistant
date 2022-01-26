@@ -6,7 +6,7 @@ import * as filterTypes from "./schema/filterTypes.json";
 import { SchemasUtil } from "./util/SchemasUtil";
 const jsondiffpatch = require("jsondiffpatch").create();
 const schemas = new SchemasUtil();
-export class InputPathCompletionActionProvider
+export class InputPathsMapCompletionActionProvider
   implements vscode.CompletionItemProvider
 {
   async provideCompletionItems(
@@ -24,14 +24,19 @@ export class InputPathCompletionActionProvider
       return { items: [], isIncomplete: true };
     }
     const resource = template.Resources[resourceName];
-
+    const path = schemas.estimateJsonPath(
+      resource,
+      document.getText(),
+      position.line
+    );
+    const pathSplit = path.split(".");
+    if (pathSplit.slice(-1)[0] !== "InputPathsMap") {
+      return;
+    }
     const current = schemas
       .getCurrentLine(document.getText(), position.line)
       .split(" ");
-    const currentProperty = current[0];
-    if (!resource || currentProperty !== "InputPath") {
-      return;
-    }
+
     let jsonPath = "";
     if (current.length === 1) {
       jsonPath = "$";
@@ -41,11 +46,10 @@ export class InputPathCompletionActionProvider
     const schemaKeys = schemas.getSchemaKeys(resource);
     const jsonPathSplit = jsonPath.split(".");
     try {
-      const registry = schemas.getRegistry(resource);
       const schema = await schemas.getSchema(
         schemaKeys.source,
         schemaKeys.detailType,
-        registry
+        schemas.getRegistry(resource)
       );
       let schemaPath = schema.components.schemas.AWSEvent.properties;
       const schemaProperty = schemas.navigateSchema(

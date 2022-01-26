@@ -4,6 +4,8 @@ import { PatternCompletionActionProvider } from "./PatternCompletionActionProvid
 import * as AWS from "aws-sdk";
 import { SingleSignOnCredentials } from "@mhlabs/aws-sdk-sso";
 import { InputPathCompletionActionProvider } from "./InputPathCompletionActionProvider";
+import { InputTemplateCompletionActionProvider } from "./InputTemplateCompletionActionProvider";
+import { InputPathsMapCompletionActionProvider } from "./InputPathsMapCompletionActionProvider";
 const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
   "eventbridge-assistant"
 );
@@ -18,11 +20,23 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("eventbridge-assistant.enable", () => {
       vscode.languages.registerCompletionItemProvider(
         "yaml",
-        new PatternCompletionActionProvider()
+        new PatternCompletionActionProvider(),
+		""
       );
       vscode.languages.registerCompletionItemProvider(
         "yaml",
-        new InputPathCompletionActionProvider()
+        new InputPathCompletionActionProvider(),
+        "."
+      );
+      vscode.languages.registerCompletionItemProvider(
+        "yaml",
+        new InputPathsMapCompletionActionProvider(),
+        "."
+      );
+      vscode.languages.registerCompletionItemProvider(
+        "yaml",
+        new InputTemplateCompletionActionProvider(),
+		"<"
       );
     })
   );

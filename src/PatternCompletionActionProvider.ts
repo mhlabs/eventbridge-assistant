@@ -16,7 +16,7 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
     | null
     | undefined
   > {
-    let resourceName = getResourceName(position, document);
+    let resourceName = schemas.getResourceName(position, document);
     const template = TemplateParser.parse(document.getText());
     if (!template) {
       return { items: [], isIncomplete: true };
@@ -30,7 +30,7 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
       // Get registry based on EventBusName
       const registryName = schemas.getRegistry(resource);
 
-      const schemaKeySuggestions = this.schemaKeysSuggestions(
+      const schemaKeySuggestions = schemas.schemaKeysSuggestions(
         document,
         position,
         registryName,
@@ -43,7 +43,7 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
       let { source, detailType }: { source: string; detailType: string } =
         schemas.getSchemaKeys(resource);
 
-      const jsonPath = this.estimateJsonPath(
+      const jsonPath = schemas.estimateJsonPath(
         resource,
         document.getText(),
         position.line
@@ -73,7 +73,7 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
 		  filterText: `- ${key}`,
           insertText: key.insertText || `- ${key.name}${key.newLine ? ":\n\t- " : ": "}`,
           kind: vscode.CompletionItemKind.Event,
-          range: this.getSuggestionRange(position, document),
+          range: schemas.getSuggestionRange(position, document),
         }));
         return { items: suggestions, isIncomplete: true };
       }
@@ -82,7 +82,7 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
 		sortText: " " + key,
         insertText: key + ":\n\t",
         kind: schemaPath[key]["$ref"] ? vscode.CompletionItemKind.Field : vscode.CompletionItemKind.Value,
-        range: this.getSuggestionRange(position, document),
+        range: schemas.getSuggestionRange(position, document),
       }));
       return { items: suggestions, isIncomplete: true };
     }
@@ -90,130 +90,7 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
     return { items: [], isIncomplete: true };
   }
 
-  schemaKeysSuggestions(
-    document: vscode.TextDocument,
-    position: vscode.Position,
-    registryName: string | null,
-    resource: any
-  ) {
-    if (!registryName) {
-      return null;
-    }
-    if (this.previousLine(document, position) === "source") {
-      const suggestions = this.sources(position, document, 0, registryName);
-      return { items: suggestions, isIncomplete: true };
-    }
-
-    if (this.previousLine(document, position) === "detail-type") {
-      const source = jp.query(resource, "$..source");
-      const suggestions = this.detailTypes(
-        position,
-        document,
-        1,
-        source[0][0],
-        registryName
-      );
-      return { items: suggestions, isIncomplete: true };
-    }
-  }
-
-  private previousLine(
-    document: vscode.TextDocument,
-    position: vscode.Position
-  ) {
-    return this.getJsonPropertyName(document.getText(), position.line - 1);
-  }
-
-  private getSuggestionRange(
-    position: vscode.Position,
-    document: vscode.TextDocument
-  ) {
-    return new vscode.Range(
-      position.line,
-      getStartChar(
-        document.getText(
-          new vscode.Range(position.line, 0, position.line, position.character)
-        )
-      ).startChar,
-      position.line,
-      position.character
-    );
-  }
-
-  private sources(
-    position: vscode.Position,
-    document: vscode.TextDocument,
-    index: number,
-    registryName: string
-  ) {
-    const sources = [
-      ...new Set(
-        schemas.schemaNames[registryName].map((p) => p.split("@")[index])
-      ),
-    ];
-    const suggestions = sources.map((key) => ({
-      label: `${key}`,
-	  sortText: " " + key,
-      filterText: `- ${key}`,
-      insertText: `- ${key}\n`,
-      kind: vscode.CompletionItemKind.Event,
-      data: key,
-      range: this.getSuggestionRange(position, document),
-    }));
-    return suggestions;
-  }
-
-  private detailTypes(
-    position: vscode.Position,
-    document: vscode.TextDocument,
-    index: number,
-    filter: string,
-    registryName: string
-  ) {
-    const detailTypes = [
-      ...new Set(
-        schemas.schemaNames[registryName]
-          .filter((p) => p.split("@")[0] === filter)
-          .map((p) =>
-            registryName === "aws.events"
-              ? p
-                  .split("@")
-                  [index].replace(/([A-Z]+)/g, " $1")
-                  .replace(/^ /, "")
-              : p.split("@")[index]
-          )
-      ),
-    ];
-    const suggestions = detailTypes.map((key) => ({
-      label: `${key}`,
-	  sortText: " " + key,
-      filterText: `- ${key}`,
-      insertText: `- ${key}\n`,
-      kind: vscode.CompletionItemKind.Event,
-      data: key,
-      range: this.getSuggestionRange(position, document),
-    }));
-    return suggestions;
-  }
-
-  getJsonPropertyName(document: string, line: number) {
-    const lines = document.split("\n");
-    return lines[line].trim().replace(":", "");
-  }
-
-  estimateJsonPath(resource: any, document: string, line: number) {
-    const lines = document.split("\n");
-    const currentStartChar = getStartChar(lines[line]).startChar;
-    let previousRow;
-    for (let i = line; i >= 0; i--) {
-      if (getStartChar(lines[i]).startChar < currentStartChar) {
-        previousRow = lines[i].trim().replace(":", "");
-        break;
-      }
-    }
-    const query = jp.nodes(resource, `$..["${previousRow}"]`);
-    return query[0].path.join(".");
-  }
+  
 
   getJsonPath(oldResource: any, resource: any) {
     const diff = jsondiffpatch.diff(oldResource, resource);
@@ -248,38 +125,3 @@ function pathDiff(obj: any, path?: string): string[] {
   return item;
 }
 
-function getStartChar(previousRow: string): any {
-  const trimmed = previousRow.trimStart();
-  const startChar = previousRow.length - trimmed.length;
-  return { startChar, trimmed };
-}
-
-function getResourceName(
-  position: vscode.Position,
-  document: vscode.TextDocument
-) {
-  let line = position.line;
-  let info: string = "";
-  let previousStartChar = 10000;
-  let resourceName;
-  while (true) {
-    line--;
-    if (line === 1) break;
-    const previousRow = document
-      .getText(new vscode.Range(line, 0, line, 10000))
-      .trimEnd();
-    const { startChar, trimmed } = getStartChar(previousRow);
-    info = trimmed;
-    
-    if (startChar < 4 && trimmed.endsWith(":")) {
-      resourceName = info.trim().replace(":", "");
-      break;
-    } else if (startChar === 0 && trimmed === "Resources:") break;
-    if (trimmed.length && !trimmed.startsWith("#")) {
-      previousStartChar = startChar;
-      resourceName = trimmed.replace(":", "");
-    }
-  }
-
-  return resourceName;
-}

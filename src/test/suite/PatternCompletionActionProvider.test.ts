@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import * as vscode from "vscode";
-
+import { SchemasUtil } from "../../util/SchemasUtil";
+const schemas = new SchemasUtil();
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
 import { PatternCompletionActionProvider } from "../../PatternCompletionActionProvider";
@@ -99,7 +100,7 @@ suite("getJsonPath tests", () => {
 				c:
 				`;
 
-    const path = provider.estimateJsonPath(ob1, yaml, 4);
+    const path = schemas.estimateJsonPath(ob1, yaml, 4);
     assert.strictEqual("$.a.b", path);
   });
 });
