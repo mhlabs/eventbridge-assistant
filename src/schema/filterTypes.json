@@ -1,4 +1,5 @@
 [
+  { "name": "[exact match]", "insertText": "- " },
   { "name": "prefix" },
   { "name": "anything-but" },
   { "name": "numeric", "newLine": true },

@@ -71,7 +71,7 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
           label: key.name,
 		  sortText: " " + key,
 		  filterText: `- ${key}`,
-          insertText: `- ${key.name}${key.newLine ? ":\n\t- " : ": "}`,
+          insertText: key.insertText || `- ${key.name}${key.newLine ? ":\n\t- " : ": "}`,
           kind: vscode.CompletionItemKind.Event,
           range: this.getSuggestionRange(position, document),
         }));
@@ -211,9 +211,7 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
         break;
       }
     }
-    console.log("previousRow", previousRow);
     const query = jp.nodes(resource, `$..["${previousRow}"]`);
-    console.log("query", query);
     return query[0].path.join(".");
   }
 
@@ -221,7 +219,7 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
     const diff = jsondiffpatch.diff(oldResource, resource);
 
     let jsonPath = pathDiff(diff)[0];
-    console.log("jsonpath", jsonPath);
+    
     if (!jsonPath) {
       return null;
     }
@@ -238,7 +236,7 @@ function pathDiff(obj: any, path?: string): string[] {
     return [];
   }
   path = path || "$";
-  //console.log(path);
+  
   let item: string[] = [];
   Object.keys(obj).forEach((key) => {
     if (typeof obj[key] === "object" && !Array.isArray(obj[key])) {
@@ -272,7 +270,7 @@ function getResourceName(
       .trimEnd();
     const { startChar, trimmed } = getStartChar(previousRow);
     info = trimmed;
-    console.log(startChar, previousRow);
+    
     if (startChar < 4 && trimmed.endsWith(":")) {
       resourceName = info.trim().replace(":", "");
       break;
