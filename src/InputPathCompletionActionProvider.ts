@@ -25,12 +25,22 @@ export class InputPathCompletionActionProvider
     }
     const resource = template.Resources[resourceName];
 
-    const current = this.getJsonPropertyName(document.getText(), position.line);
-    if (!resource || current !== "InputPath") {
+    const current = this.getJsonPropertyName(
+      document.getText(),
+      position.line
+    ).split(" ");
+    const currentProperty = current[0];
+    if (!resource || currentProperty !== "InputPath") {
       return;
     }
-
+    let jsonPath = "";
+    if (current.length === 1) {
+      jsonPath = "$";
+    } else {
+      jsonPath = current[1];
+    }
     const schemaKeys = schemas.getSchemaKeys(resource);
+    const jsonPathSplit = jsonPath.split(".");
     try {
       const schema = await schemas.getSchema(
         schemaKeys.source,
@@ -38,15 +48,30 @@ export class InputPathCompletionActionProvider
         "aws.events"
       );
       let schemaPath = schema.components.schemas.AWSEvent.properties;
-      const what = schemas.navigateSchema([], schemaPath, schema, false);
-      const suggestions = Object.keys(what.schemaPath).map((key) => ({
-        label: key,
-        sortText: " " + key,
-        insertText: `${key}`,
-        kind: vscode.CompletionItemKind.Event,
-        range: this.getSuggestionRange(position, document),
-      }));
-      return { items: suggestions, isIncomplete: true };
+      const schemaProperty = schemas.navigateSchema(
+        jsonPathSplit.slice(1).filter((p) => p.length),
+        schemaPath,
+        schema,
+        false
+      );
+      if (!schemaProperty.isLeaf) {
+        const suggestions = Object.keys(schemaProperty.schemaPath).map((key) => ({
+          label: key,
+          sortText: " " + key,
+          insertText: `${
+            current.length === 1
+              ? "$."
+              : !schemaProperty.isPartial
+              ? jsonPathSplit.slice(-1)[0]
+              : ""
+          }${key}`,
+          //          filterText: jsonPathSplit.slice(-1)[0],
+          kind: schemaProperty.schemaPath[key]["$ref"]
+            ? vscode.CompletionItemKind.Field
+            : vscode.CompletionItemKind.Event,
+        }));
+        return { items: suggestions, isIncomplete: true };
+      }
     } catch (e) {
       console.log(e);
     }

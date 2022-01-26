@@ -16,10 +16,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand("eventbridge-assistant.enable", () => {
-    //   vscode.languages.registerCompletionItemProvider(
-    //     "yaml",
-    //     new PatternCompletionActionProvider()
-    //   );
+      vscode.languages.registerCompletionItemProvider(
+        "yaml",
+        new PatternCompletionActionProvider()
+      );
       vscode.languages.registerCompletionItemProvider(
         "yaml",
         new InputPathCompletionActionProvider()

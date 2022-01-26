@@ -69,14 +69,16 @@ export class SchemasUtil {
     }
     return { source, detailType };
   }
-  private toPascal(str: string)  {
-	return str.split("/")
-	  .map(p => p.split("-")
-		.map(substr => substr.charAt(0)
-		  .toUpperCase() +
-		  substr.slice(1))
-		.join(""))
-	  .join("/");
+  private toPascal(str: string) {
+    return str
+      .split("/")
+      .map((p) =>
+        p
+          .split("-")
+          .map((substr) => substr.charAt(0).toUpperCase() + substr.slice(1))
+          .join("")
+      )
+      .join("/");
   }
   getRegistry(resource: any) {
     const doc = JsonFind(resource);
@@ -106,6 +108,9 @@ export class SchemasUtil {
     isLeaf: boolean
   ) {
     for (const path of pathList || []) {
+      if (!schemaPath[path]) {
+        return { schemaPath, isLeaf: false, isPartial: true };
+      }
       schemaPath = schemaPath[path];
       if (schemaPath["$ref"] && (schemaPath.type || "object") === "object") {
         schemaPath =
