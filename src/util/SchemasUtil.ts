@@ -4,7 +4,7 @@ import * as Schemas from "aws-sdk/clients/schemas";
 import { DescribeSchemaResponse } from "aws-sdk/clients/schemas";
 import * as envelope from "../schema/envelope.json";
 import * as jp from "jsonpath";
-
+import {EOL} from "os"
 const JsonFind = require("json-find");
 export class SchemasUtil {
   static schemaNames: { [registry: string]: string[] } = {};
@@ -155,7 +155,7 @@ export class SchemasUtil {
       label: `${key}`,
       sortText: " " + key,
       filterText: `- ${key}`,
-      insertText: `- ${key}\n`,
+      insertText: `- ${key}${EOL}`,
       kind: vscode.CompletionItemKind.Event,
       data: key,
       range: this.getSuggestionRange(position, document),
@@ -224,7 +224,7 @@ export class SchemasUtil {
       label: `${key}`,
       sortText: " " + key,
       filterText: `- ${key}`,
-      insertText: `- ${key}\n`,
+      insertText: `- ${key}${EOL}`,
       kind: vscode.CompletionItemKind.Event,
       data: key,
       range: this.getSuggestionRange(position, document),
@@ -262,7 +262,7 @@ export class SchemasUtil {
   }
 
   static getCurrentLine(document: string, line: number) {
-    const lines = document.split("\n");
+    const lines = document.split(EOL);
     return lines[line].trim().replace(":", "");
   }
 
@@ -301,7 +301,7 @@ export class SchemasUtil {
   }
 
   static estimateJsonPath(resource: any, document: string, line: number) {
-    const lines = document.split("\n");
+    const lines = document.split(EOL);
     const currentStartChar = this.getStartChar(lines[line]).startChar;
     let previousRow;
     for (let i = line; i >= 0; i--) {

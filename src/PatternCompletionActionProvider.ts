@@ -4,6 +4,7 @@ import * as jp from "jsonpath";
 import { TemplateParser } from "./util/TamplateParser";
 import * as filterTypes from "./schema/filterTypes.json";
 import { SchemasUtil } from "./util/SchemasUtil";
+import { EOL } from "os";
 const jsondiffpatch = require("jsondiffpatch").create();
 export class PatternCompletionActionProvider implements vscode.CompletionItemProvider {
   async provideCompletionItems(
@@ -70,7 +71,7 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
           label: key.name,
 		  sortText: " " + key,
 		  filterText: `- ${key}`,
-          insertText: key.insertText || `- ${key.name}${key.newLine ? ":\n\t- " : ": "}`,
+          insertText: key.insertText || `- ${key.name}${key.newLine ? `:${EOL}\t- ` : ": "}`,
           kind: vscode.CompletionItemKind.Event,
           range: SchemasUtil.getSuggestionRange(position, document),
         }));
@@ -79,7 +80,7 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
       const suggestions = schemaKeys.map((key) => ({
         label: key,
 		sortText: " " + key,
-        insertText: key + ":\n\t",
+        insertText: key + `:${EOL}\t`,
         kind: schemaPath[key]["$ref"] ? vscode.CompletionItemKind.Field : vscode.CompletionItemKind.Value,
         range: SchemasUtil.getSuggestionRange(position, document),
       }));
