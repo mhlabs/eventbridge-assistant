@@ -6,15 +6,17 @@ import * as envelope from "../schema/envelope.json";
 import * as jp from "jsonpath";
 
 const JsonFind = require("json-find");
-
-const schemas = new Schemas();
 export class SchemasUtil {
-  schemaNames: { [registry: string]: string[] } = {};
-  schemaResponse: { [name: string]: DescribeSchemaResponse | undefined } = {
+  static schemaNames: { [registry: string]: string[] } = {};
+  static schemaResponse: {
+    [name: string]: DescribeSchemaResponse | undefined;
+  } = {
     "@": { Content: JSON.stringify(envelope) },
   };
 
-  async getSchemas(registryName: string) {
+  static async getSchemas(registryName: string) {
+    const schemas = new Schemas();
+
     if (!this.schemaNames[registryName]) {
       this.schemaNames[registryName] = [];
       let token: string | undefined;
@@ -35,7 +37,7 @@ export class SchemasUtil {
       } while (token);
     }
   }
-  async getSchema(
+  static async getSchema(
     source: string,
     detailType: string,
     registryName: string | null
@@ -44,19 +46,23 @@ export class SchemasUtil {
       return;
     }
     const schemaName = source && detailType ? `${source}@${detailType}` : "@";
-    this.schemaResponse[schemaName] =
-      this.schemaResponse[schemaName] ||
-      (await schemas
-        .describeSchema({
-          RegistryName: registryName,
-          SchemaName: schemaName,
-        })
-        .promise());
+    const schemas = new Schemas();
+
+    if (schemaName !== "@") {
+      this.schemaResponse[schemaName] =
+        this.schemaResponse[schemaName] ||
+        (await schemas
+          .describeSchema({
+            RegistryName: registryName,
+            SchemaName: schemaName,
+          })
+          .promise());
+    }
     const schema = JSON.parse(this.schemaResponse[schemaName]?.Content || "{}");
     return schema;
   }
 
-  getSchemaKeys(resource: any) {
+  static getSchemaKeys(resource: any) {
     const doc = JsonFind(resource);
     let detailType: string = "";
     let source: string = "";
@@ -71,7 +77,8 @@ export class SchemasUtil {
     }
     return { source, detailType };
   }
-  private toPascal(str: string) {
+
+  private static toPascal(str: string) {
     return str
       .split("/")
       .map((p) =>
@@ -82,7 +89,8 @@ export class SchemasUtil {
       )
       .join("/");
   }
-  getRegistry(resource: any) {
+
+  static getRegistry(resource: any) {
     const doc = JsonFind(resource);
     const props = JsonFind(resource.Properties);
     const isEventContextCheck = doc.checkKey("Type");
@@ -103,7 +111,7 @@ export class SchemasUtil {
     return isEventContext ? registryName : null;
   }
 
-  navigateSchema(
+  static navigateSchema(
     pathList: string[],
     schemaPath: any,
     schema: any,
@@ -132,7 +140,7 @@ export class SchemasUtil {
     return { schemaPath, isLeaf };
   }
 
-  sources(
+  static sources(
     position: vscode.Position,
     document: vscode.TextDocument,
     index: number,
@@ -155,7 +163,7 @@ export class SchemasUtil {
     return suggestions;
   }
 
-  getSuggestionRange(
+  static getSuggestionRange(
     position: vscode.Position,
     document: vscode.TextDocument
   ) {
@@ -171,33 +179,48 @@ export class SchemasUtil {
     );
   }
 
-  getStartChar(previousRow: string): any {
+  static getStartChar(previousRow: string): any {
     const trimmed = previousRow.trimStart();
     const startChar = previousRow.length - trimmed.length;
     return { startChar, trimmed };
   }
-  detailTypes(
+
+  static async detailTypes(
     position: vscode.Position,
     document: vscode.TextDocument,
     index: number,
     filter: string,
     registryName: string
   ) {
-    const detailTypes = [
+    const detailTypes = await Promise.all([
       ...new Set(
         this.schemaNames[registryName]
           .filter((p) => p.split("@")[0] === filter)
-          .map((p) =>
-            registryName === "aws.events"
-              ? p
-                  .split("@")
-                  [index].replace(/([A-Z]+)/g, " $1")
-                  .replace(/^ /, "")
-              : p.split("@")[index]
-          )
+          .map(async (p) => {
+            const split = p.split("@");
+            let source = split[0];
+            let detailType = split[1];
+            const schema = await this.getSchema(
+              source,
+              detailType,
+              registryName
+            );
+            if (
+              schema?.components?.schemas?.AWSEvent[
+                "x-amazon-events-detail-type"
+              ]
+            ) {
+              detailType =
+                schema.components.schemas.AWSEvent[
+                  "x-amazon-events-detail-type"
+                ];
+            }
+
+            return detailType;
+          })
       ),
-    ];
-    const suggestions = detailTypes.map((key) => ({
+    ]);
+    const suggestions = await detailTypes.map((key) => ({
       label: `${key}`,
       sortText: " " + key,
       filterText: `- ${key}`,
@@ -209,7 +232,10 @@ export class SchemasUtil {
     return suggestions;
   }
 
-  getResourceName(position: vscode.Position, document: vscode.TextDocument) {
+  static getResourceName(
+    position: vscode.Position,
+    document: vscode.TextDocument
+  ) {
     let line = position.line;
     let info: string = "";
     let previousStartChar = 10000;
@@ -235,12 +261,12 @@ export class SchemasUtil {
     return resourceName;
   }
 
-  getCurrentLine(document: string, line: number) {
+  static getCurrentLine(document: string, line: number) {
     const lines = document.split("\n");
     return lines[line].trim().replace(":", "");
   }
 
-  schemaKeysSuggestions(
+  static async schemaKeysSuggestions(
     document: vscode.TextDocument,
     position: vscode.Position,
     registryName: string | null,
@@ -256,25 +282,25 @@ export class SchemasUtil {
 
     if (this.previousLine(document, position) === "detail-type") {
       const source = jp.query(resource, "$..source");
-      const suggestions = this.detailTypes(
+      const suggestions = await this.detailTypes(
         position,
         document,
         1,
-        source[0][0],
+        source[source.length - 1][0],
         registryName
       );
       return { items: suggestions, isIncomplete: true };
     }
   }
 
-  private previousLine(
+  static previousLine(
     document: vscode.TextDocument,
     position: vscode.Position
   ) {
     return this.getCurrentLine(document.getText(), position.line - 1);
   }
 
-  estimateJsonPath(resource: any, document: string, line: number) {
+  static estimateJsonPath(resource: any, document: string, line: number) {
     const lines = document.split("\n");
     const currentStartChar = this.getStartChar(lines[line]).startChar;
     let previousRow;

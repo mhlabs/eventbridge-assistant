@@ -5,7 +5,6 @@ import { TemplateParser } from "./util/TamplateParser";
 import * as filterTypes from "./schema/filterTypes.json";
 import { SchemasUtil } from "./util/SchemasUtil";
 const jsondiffpatch = require("jsondiffpatch").create();
-const schemas = new SchemasUtil();
 export class PatternCompletionActionProvider implements vscode.CompletionItemProvider {
   async provideCompletionItems(
     document: vscode.TextDocument,
@@ -16,7 +15,7 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
     | null
     | undefined
   > {
-    let resourceName = schemas.getResourceName(position, document);
+    let resourceName = SchemasUtil.getResourceName(position, document);
     const template = TemplateParser.parse(document.getText());
     if (!template) {
       return { items: [], isIncomplete: true };
@@ -24,13 +23,13 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
     const resource = template.Resources[resourceName];
     if (resource) {
       // Get and cache schema names
-      await schemas.getSchemas("aws.events");
-      await schemas.getSchemas("discovered-schemas");
+      await SchemasUtil.getSchemas("aws.events");
+      await SchemasUtil.getSchemas("discovered-schemas");
 
       // Get registry based on EventBusName
-      const registryName = schemas.getRegistry(resource);
+      const registryName = SchemasUtil.getRegistry(resource);
 
-      const schemaKeySuggestions = schemas.schemaKeysSuggestions(
+      const schemaKeySuggestions = await SchemasUtil.schemaKeysSuggestions(
         document,
         position,
         registryName,
@@ -41,9 +40,9 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
       }
 
       let { source, detailType }: { source: string; detailType: string } =
-        schemas.getSchemaKeys(resource);
+      SchemasUtil.getSchemaKeys(resource);
 
-      const jsonPath = schemas.estimateJsonPath(
+      const jsonPath = SchemasUtil.estimateJsonPath(
         resource,
         document.getText(),
         position.line
@@ -53,12 +52,12 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
         pathSplit = jsonPath?.split("Properties.EventPattern.");
       }
       const pathList = pathSplit.length > 1 ? pathSplit[1].split(".") : [];
-      const schema = await schemas.getSchema(source, detailType, registryName);
+      const schema = await SchemasUtil.getSchema(source, detailType, registryName);
 
       let schemaPath = schema.components.schemas.AWSEvent.properties;
       let isLeaf = false;
 
-      ({ schemaPath, isLeaf } = schemas.navigateSchema(
+      ({ schemaPath, isLeaf } = SchemasUtil.navigateSchema(
         pathList,
         schemaPath,
         schema,
@@ -73,7 +72,7 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
 		  filterText: `- ${key}`,
           insertText: key.insertText || `- ${key.name}${key.newLine ? ":\n\t- " : ": "}`,
           kind: vscode.CompletionItemKind.Event,
-          range: schemas.getSuggestionRange(position, document),
+          range: SchemasUtil.getSuggestionRange(position, document),
         }));
         return { items: suggestions, isIncomplete: true };
       }
@@ -82,7 +81,7 @@ export class PatternCompletionActionProvider implements vscode.CompletionItemPro
 		sortText: " " + key,
         insertText: key + ":\n\t",
         kind: schemaPath[key]["$ref"] ? vscode.CompletionItemKind.Field : vscode.CompletionItemKind.Value,
-        range: schemas.getSuggestionRange(position, document),
+        range: SchemasUtil.getSuggestionRange(position, document),
       }));
       return { items: suggestions, isIncomplete: true };
     }

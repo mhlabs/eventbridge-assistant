@@ -6,6 +6,9 @@ import { SingleSignOnCredentials } from "@mhlabs/aws-sdk-sso";
 import { InputPathCompletionActionProvider } from "./InputPathCompletionActionProvider";
 import { InputTemplateCompletionActionProvider } from "./InputTemplateCompletionActionProvider";
 import { InputPathsMapCompletionActionProvider } from "./InputPathsMapCompletionActionProvider";
+import sharedIniFileLoader = require("@aws-sdk/shared-ini-file-loader");
+import { SchemasUtil } from "./util/SchemasUtil";
+
 const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
   "eventbridge-assistant"
 );
@@ -15,13 +18,36 @@ export async function activate(context: vscode.ExtensionContext) {
   } catch (err: any) {
     await vscode.window.showErrorMessage(err);
   }
+  vscode.commands.registerCommand(
+    "eventbridge-assistant.awsProfile",
+    async (cmd: any) => {
+      try {
+        const configFiles = await sharedIniFileLoader.loadSharedConfigFiles();
+        const profile = await vscode.window.showQuickPick(
+          Object.keys(configFiles.configFile)
+        );
+        await config.update("AWSProfile", profile);
+        process.env.AWS_PROFILE = profile;
+        const creds = await (
+          AWS.config.credentialProvider as any
+        ).resolvePromise();
+        creds.profile = profile;
+        await creds.refreshPromise();
+        SchemasUtil.schemaNames = {};
+        SchemasUtil.schemaResponse = {};
+        vscode.window.showInformationMessage(`Switched to profile: ${profile}`);
+      } catch (err: any) {
+        vscode.window.showInformationMessage(err.message);
+      }
+    }
+  );
 
   context.subscriptions.push(
     vscode.commands.registerCommand("eventbridge-assistant.enable", () => {
       vscode.languages.registerCompletionItemProvider(
         "yaml",
         new PatternCompletionActionProvider(),
-		""
+        ""
       );
       vscode.languages.registerCompletionItemProvider(
         "yaml",
@@ -36,7 +62,7 @@ export async function activate(context: vscode.ExtensionContext) {
       vscode.languages.registerCompletionItemProvider(
         "yaml",
         new InputTemplateCompletionActionProvider(),
-		"<"
+        "<"
       );
     })
   );
@@ -47,7 +73,10 @@ export async function activate(context: vscode.ExtensionContext) {
 async function authenticate(profile?: any) {
   try {
     process.env.AWS_PROFILE =
-      profile || (await config.get("AWSProfile")) || "default";
+      profile ||
+      (await config.get("AWSProfile")) ||
+      process.env.AWS_PROFILE ||
+      "default";
     AWS.config.credentialProvider?.providers.unshift(
       new SingleSignOnCredentials()
     );

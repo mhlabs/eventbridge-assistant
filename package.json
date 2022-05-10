@@ -2,15 +2,15 @@
   "name": "eventbridge-assistant",
   "displayName": "EventBridge Assistant",
   "description": "Autocomplete for building patterns against EventBridge schemas",
-  "version": "0.0.14",
+  "version": "0.0.16",
   "publisher": "ljacobsson",
   "engines": {
     "vscode": "^1.63.0"
   },
   "categories": [
     "Other"
-  ],  
-	"icon": "images/icon.png",
+  ],
+  "icon": "images/icon.png",
   "keywords": [
     "yaml",
     "eventbridge",
@@ -18,13 +18,32 @@
     "serverless"
   ],
   "repository": {
-		"type": "git",
-		"url": "https://github.com/mhlabs/eventbridge-assistant.git"
-	},
+    "type": "git",
+    "url": "https://github.com/mhlabs/eventbridge-assistant.git"
+  },
   "activationEvents": [
     "onLanguage:yaml"
   ],
   "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "eventbridge-assistant.awsProfile",
+        "title": "AWS Profile",
+        "category": "EventBridge Assistant"
+      }
+    ],
+    "configuration": {
+      "title": "EventBridge Assistant",
+      "properties": {
+        "eventbridge-assistant.AWSProfile": {
+          "type": "string",
+          "default": "default",
+          "description": "The AWS profile to use"
+        }
+      }
+    }
+  },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
