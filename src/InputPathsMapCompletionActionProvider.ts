@@ -4,12 +4,10 @@ import * as jp from "jsonpath";
 import { TemplateParser } from "./util/TamplateParser";
 import * as filterTypes from "./schema/filterTypes.json";
 import { SchemasUtil } from "./util/SchemasUtil";
-const jsondiffpatch = require("jsondiffpatch").create();
-const schemas = new SchemasUtil();
 export class InputPathsMapCompletionActionProvider
   implements vscode.CompletionItemProvider
 {
-  async provideCompletionItems(
+    async provideCompletionItems(
     document: vscode.TextDocument,
     position: vscode.Position
   ): Promise<
@@ -18,13 +16,14 @@ export class InputPathsMapCompletionActionProvider
     | null
     | undefined
   > {
-    let resourceName = schemas.getResourceName(position, document);
+
+    let resourceName = SchemasUtil.getResourceName(position, document);
     const template = TemplateParser.parse(document.getText());
     if (!template) {
       return { items: [], isIncomplete: true };
     }
     const resource = template.Resources[resourceName];
-    const path = schemas.estimateJsonPath(
+    const path = SchemasUtil.estimateJsonPath(
       resource,
       document.getText(),
       position.line
@@ -33,7 +32,7 @@ export class InputPathsMapCompletionActionProvider
     if (pathSplit.slice(-1)[0] !== "InputPathsMap") {
       return;
     }
-    const current = schemas
+    const current = SchemasUtil
       .getCurrentLine(document.getText(), position.line)
       .split(" ");
 
@@ -43,16 +42,16 @@ export class InputPathsMapCompletionActionProvider
     } else {
       jsonPath = current[1];
     }
-    const schemaKeys = schemas.getSchemaKeys(resource);
+    const schemaKeys = SchemasUtil.getSchemaKeys(resource);
     const jsonPathSplit = jsonPath.split(".");
     try {
-      const schema = await schemas.getSchema(
+      const schema = await SchemasUtil.getSchema(
         schemaKeys.source,
         schemaKeys.detailType,
-        schemas.getRegistry(resource)
+        SchemasUtil.getRegistry(resource)
       );
       let schemaPath = schema.components.schemas.AWSEvent.properties;
-      const schemaProperty = schemas.navigateSchema(
+      const schemaProperty = SchemasUtil.navigateSchema(
         jsonPathSplit.slice(1).filter((p) => p.length),
         schemaPath,
         schema,

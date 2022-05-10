@@ -4,8 +4,6 @@ import * as jp from "jsonpath";
 import { TemplateParser } from "./util/TamplateParser";
 import * as filterTypes from "./schema/filterTypes.json";
 import { SchemasUtil } from "./util/SchemasUtil";
-const jsondiffpatch = require("jsondiffpatch").create();
-const schemas = new SchemasUtil();
 export class InputTemplateCompletionActionProvider
   implements vscode.CompletionItemProvider
 {
@@ -20,20 +18,21 @@ export class InputTemplateCompletionActionProvider
     | null
     | undefined
   > {
+    const schemas = new SchemasUtil();
 	
-    let resourceName = schemas.getResourceName(position, document);
+    let resourceName = SchemasUtil.getResourceName(position, document);
     const template = TemplateParser.parse(document.getText());
     if (!template) {
       return { items: [], isIncomplete: true };
     }
     const resource = template.Resources[resourceName];
-    const path = schemas.estimateJsonPath(
+    const path = SchemasUtil.estimateJsonPath(
       resource,
       document.getText(),
       position.line
     );
     const pathSplit = path.split(".");
-    const current = schemas
+    const current = SchemasUtil
       .getCurrentLine(document.getText(), position.line)
       .split(" ");
     if (

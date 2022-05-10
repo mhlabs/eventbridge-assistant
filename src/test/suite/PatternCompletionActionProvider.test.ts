@@ -100,7 +100,7 @@ suite("getJsonPath tests", () => {
 				c:
 				`;
 
-    const path = schemas.estimateJsonPath(ob1, yaml, 4);
+    const path = SchemasUtil.estimateJsonPath(ob1, yaml, 4);
     assert.strictEqual("$.a.b", path);
   });
 });
