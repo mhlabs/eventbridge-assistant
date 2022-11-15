@@ -1,6 +1,8 @@
 [
-  { "name": "[exact match]", "insertText": "- " },
+  { "name": "equals", "insertText": "- " },
+  { "name": "equals-ignore-case", "insertText": "- " },
   { "name": "prefix" },
+  { "name": "suffix" },
   { "name": "anything-but" },
   { "name": "numeric", "newLine": true },
   { "name": "cidr" },
